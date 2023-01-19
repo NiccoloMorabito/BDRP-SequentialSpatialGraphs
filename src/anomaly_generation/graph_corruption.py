@@ -26,20 +26,7 @@ from scipy.spatial import distance
 import random
 import uuid
 from copy import deepcopy
-
-CATEGORIES = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',\
-    'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant',\
-    'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard',\
-    'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle',\
-    'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli',\
-    'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet',\
-    'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator',\
-    'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
-
-#TODO check the value of these contants (change also names of the variables)
-STG_SPATIAL_DIST_LABEL = "weight"
-SG_SPATIAL_DIST_LABEL = "distance"
-SG_SPATIAL_SPEED_LABEL = "speed"
+from common_utils.stg_utils import *
 
 class Corruptor:
     def __init__(self, frame_height: int, frame_width: int, is_stg: bool = True) -> None:
@@ -54,7 +41,7 @@ class Corruptor:
         self.nodeid_to_category = dict()
         self.nodeid_to_bbox_params = dict()
     
-    def corrupt_graph(self, graph: nx.Graph, verbose: bool = True):
+    def corrupt_graph(self, graph: nx.Graph, verbose: bool = False):
         copy = deepcopy(graph)
         
         if self.corruption_categs:

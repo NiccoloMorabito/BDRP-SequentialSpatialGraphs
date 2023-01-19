@@ -329,14 +329,50 @@ def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = F
                     vid_writer.write(im0)
 
         videoname_to_graph_seq[videoname].append(graph)
-        #TODO awful temporary solution to transmit height and width
-        videoname_to_frame_size[videoname] = (w,h)
 
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         #print(f"Results saved to {save_dir}{s}")
     print(f'Done. ({time.time() - t0:.3f}s)')
 
-    return videoname_to_graph_seq, videoname_to_frame_size
+    return videoname_to_graph_seq
     
 
+'''
+STUFF ORIGINAL IN THE MAIN HERE, USED TO CALL THE FUNCTIN THROUGH THE PARSERS
+Use the following only to document the parameters of the detect function or to understand what you can remove etc.
+
+def prepare_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--weights', nargs='+', type=str, default=detect_with_networkx.MODEL_PATH, help='model.pt path(s)')
+    parser.add_argument('--source', type=str, default='test/', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
+    parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
+    parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
+    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+    parser.add_argument('--view-img', action='store_true', help='display results')
+    parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+    #parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
+    parser.add_argument('--nosave', action='store_true', help='do not save images/videos')
+    parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 0 2 3')
+    parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
+    parser.add_argument('--augment', action='store_true', help='augmented inference')
+    parser.add_argument('--project', default='runs/detect', help='save results to project/name')
+    parser.add_argument('--name', default='exp', help='save results to project/name')
+    parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
+
+    parser.add_argument('--track', action='store_true', help='run tracking')
+    parser.add_argument('--show-track', action='store_true', help='show tracked path')
+    parser.add_argument('--show-fps', action='store_true', help='show fps')
+    parser.add_argument('--unique-track-color', action='store_true', help='show each track in unique color')
+
+
+    opt = parser.parse_args()
+    print(opt)
+    return opt
+
+ORIGINALLY, THE CODE WAS CALLED WITH THE FOLLOWING COMMAND:
+"python3 src/pipeline.py --no-trace --view-img --source test/street.mp4 --show-fps --track --show-track --project data --name live_graph"
+
+'''
