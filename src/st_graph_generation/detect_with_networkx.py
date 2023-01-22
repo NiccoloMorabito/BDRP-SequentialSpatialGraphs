@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from os.path import join
+from os.path import join, isfile
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
@@ -8,8 +8,10 @@ import numpy as np
 from sys import path
 from scipy.spatial import distance
 from dataclasses import dataclass, field
-from typing import List, Tuple, Dict, Any, Union
+from typing import Union
 import networkx as nx
+
+from common_utils.stg_utils import save_video_params
 
 YOLO_PATH = "/Users/niccolomorabito/morabito.1808746@studenti.uniroma1.it - Google Drive/My Drive/BDMA/Semester3 CS/Big Data Research Project/Big-Data-Research-Project/src/object_detection/yolov7_with_object_tracking"    
 MODEL_PATH = join(YOLO_PATH, "yolov7.pt")
@@ -25,7 +27,7 @@ path.append(YOLO_PATH)
 from models.experimental import attempt_load
 from utils.datasets import LoadImages
 from utils.general import check_img_size, non_max_suppression, apply_classifier, \
-                scale_coords, set_logging,
+                scale_coords, set_logging
 from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 from sort import *
 
@@ -122,8 +124,8 @@ def generate_spatial_graph(img, bbox, identities=None, categories=None, confiden
 
     return img, graph
 
-def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = False, img_size:int = 640, trace:bool = False,\
-    device:str = '', augment=None, conf_thres:float = 0.25, iou_thres:float = 0.45,\
+def videos_to_graphs(source:str = "videos/", dest:str = "graphs/", save_graphs : bool = True, weights:str = MODEL_PATH, \
+    img_size:int = 640, trace:bool = False, device:str = '', augment=None, conf_thres:float = 0.25, iou_thres:float = 0.45,\
     classes=None, agnostic_nms=None, run_tracking:bool = True, unique_track_color:bool = False, view_img:bool = False, show_fps:bool = False, show_track:bool = False):
 
     # Initialize
@@ -168,11 +170,18 @@ def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = F
     ###################################
 
     videoname_to_graph_seq = dict()
-    videoname_to_frame_size = dict()
-
+    frame_i = 0
     for path, img, im0s, vid_cap, videoname in dataset:
         if videoname not in videoname_to_graph_seq.keys():
             videoname_to_graph_seq[videoname] = list()
+            frame_i = 0
+            videoname_graph_folder = join(dest, videoname)
+            Path(videoname_graph_folder).mkdir(exist_ok=True)
+            save_video_params(source, dest, videoname)
+        if isfile(join(videoname_graph_folder, f"{frame_i}.gpickle")):
+            frame_i += 1
+            continue
+
 
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -291,6 +300,10 @@ def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = F
                 cv2.waitKey(1)  # 1 millisecond
 
         videoname_to_graph_seq[videoname].append(graph)
+        if save_graphs:
+            graph_path = join(videoname_graph_folder, f"{frame_i}.gpickle")
+            nx.write_gpickle(graph, graph_path)
+        frame_i += 1
 
     print(f'Done. ({time.time() - t0:.3f}s)')
 
