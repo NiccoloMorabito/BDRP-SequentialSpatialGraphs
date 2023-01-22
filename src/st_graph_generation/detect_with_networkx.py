@@ -23,9 +23,9 @@ NOLABEL = False # don't show label
 
 path.append(YOLO_PATH)
 from models.experimental import attempt_load
-from utils.datasets import LoadStreams, LoadImages
-from utils.general import check_img_size, check_imshow, non_max_suppression, apply_classifier, \
-                scale_coords, set_logging, increment_path
+from utils.datasets import LoadImages
+from utils.general import check_img_size, non_max_suppression, apply_classifier, \
+                scale_coords, set_logging,
 from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 from sort import *
 
@@ -123,15 +123,8 @@ def generate_spatial_graph(img, bbox, identities=None, categories=None, confiden
     return img, graph
 
 def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = False, img_size:int = 640, trace:bool = False,\
-    project:str = "data", name:str = "live_graph", device:str = '', nosave:bool = False, augment=None, conf_thres:float = 0.25, iou_thres:float = 0.45,\
+    device:str = '', augment=None, conf_thres:float = 0.25, iou_thres:float = 0.45,\
     classes=None, agnostic_nms=None, run_tracking:bool = True, unique_track_color:bool = False, view_img:bool = False, show_fps:bool = False, show_track:bool = False):
-
-    save_img = not nosave and not source.endswith('.txt')  # save inference images
-    webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
-        ('rtsp://', 'rtmp://', 'http://', 'https://'))
-    save_dir = Path(increment_path(Path(project) / name, exist_ok=True))  # increment run
-    if not nosave:  
-        (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
 
     # Initialize
     set_logging()
@@ -157,12 +150,7 @@ def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = F
 
     # Set Dataloader
     vid_path, vid_writer = None, None
-    if webcam:
-        view_img = check_imshow()
-        cudnn.benchmark = True  # set True to speed up constant image size inference
-        dataset = LoadStreams(source, img_size=img_size, stride=stride)
-    else:
-        dataset = LoadImages(source, img_size=img_size, stride=stride)
+    dataset = LoadImages(source, img_size=img_size, stride=stride)
 
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
@@ -215,14 +203,9 @@ def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = F
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
-            if webcam:  # batch_size >= 1
-                p, s, im0, frame = path[i], '%g: ' % i, im0s[i].copy(), dataset.count
-            else:
-                p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
+            p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
 
             p = Path(p)  # to Path
-            save_path = str(save_dir / p.name)  # img.jpg
-            txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             if len(det):
                 # Rescale boxes from img_size to im0 size
@@ -238,7 +221,6 @@ def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = F
                 for x1,y1,x2,y2,conf,detclass in det.cpu().detach().numpy():
                     dets_to_sort = np.vstack((dets_to_sort, 
                                 np.array([x1, y1, x2, y2, conf, detclass])))
-
 
                 if run_tracking:
   
@@ -308,31 +290,8 @@ def detect(source:str = "videos/", weights:str = MODEL_PATH, save_txt : bool = F
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
 
-            # Save results (image with detections)
-            if save_img:
-                if dataset.mode == 'image':
-                    cv2.imwrite(save_path, im0)
-                    print(f" The image with the result is saved in: {save_path}")
-                else:  # 'video' or 'stream'
-                    if vid_path != save_path:  # new video
-                        vid_path = save_path
-                        if isinstance(vid_writer, cv2.VideoWriter):
-                            vid_writer.release()  # release previous video writer
-                        if vid_cap:  # video
-                            fps = vid_cap.get(cv2.CAP_PROP_FPS)
-                            w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                            h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                        else:  # stream
-                            fps, w, h = 30, im0.shape[1], im0.shape[0]
-                            save_path += '.mp4'
-                        vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
-                    vid_writer.write(im0)
-
         videoname_to_graph_seq[videoname].append(graph)
 
-    if save_txt or save_img:
-        s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
-        #print(f"Results saved to {save_dir}{s}")
     print(f'Done. ({time.time() - t0:.3f}s)')
 
     return videoname_to_graph_seq
