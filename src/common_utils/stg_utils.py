@@ -4,6 +4,7 @@ from pathlib import Path
 import cv2
 from typing import List, Tuple, Dict, Any, Union
 from argparse import Namespace
+import pickle
 
 CATEGORIES = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',\
     'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant',\
@@ -19,6 +20,8 @@ STG_SPATIAL_DIST_LABEL = "weight"
 SG_SPATIAL_DIST_LABEL = "distance"
 SG_SPATIAL_SPEED_LABEL = "speed"
 
+PARAMS_FILENAME = "params.pickle"
+
 def get_video_params(video_path: Union[Path, str]) -> dict:
     if not exists(video_path): raise FileNotFoundError("Video file not found")
     cap = cv2.VideoCapture(video_path)
@@ -30,6 +33,18 @@ def get_video_params(video_path: Union[Path, str]) -> dict:
     })
     cap.release()
     return params
+
+def save_video_params(source: str, dest: str, videoname: str):
+    video_path = join(source, videoname)
+    video_params = get_video_params(video_path)
+    params_path = join(dest, videoname, PARAMS_FILENAME)
+    with open(params_path, 'wb') as f:
+        pickle.dump(video_params, f)
+
+def load_video_params(video_folder: str) -> dict:
+    params_path = join(video_folder, PARAMS_FILENAME)
+    with open(params_path, 'rb') as f:
+        return pickle.load(f)
 
 def dict_with_attributes(d: Dict[str, Any]) -> Namespace:
     """
