@@ -22,9 +22,7 @@ POSSIBLE IDEAS FOR CORRUPTION (to develop, update, etc.)
 '''
 
 import networkx as nx
-from scipy.spatial import distance
 import random
-import uuid
 from copy import deepcopy
 from common_utils.stg_utils import *
 
@@ -35,7 +33,7 @@ class Corruptor:
         self.is_stg = is_stg # TODO if stg, the edge has only one attribute (distance). otherwise, it has two (distance and speed)
 
         #TODO randomly choose these booleans (and their parameters?) but remember to use the same boolean for the same Corruptor
-        self.corruption_categs, self.corruption_weights, self.permutation_weights, self.corruption_bboxes = False, False, False, True
+        self.corruption_categs, self.corruption_weights, self.permutation_weights, self.corruption_bboxes = True, True, False, True
 
         # memory fields (TODO remember that when a node is not in the graph anymore, it must be removed from here (its id could be reassigned))
         self.nodeid_to_category = dict()
@@ -136,17 +134,20 @@ class Corruptor:
             bigger, perc_x1, perc_x1, perc_y1, perc_x2, perc_y2 = self.nodeid_to_bbox_params[node.id]
 
             '''
+            #TODO the testing code can work only after fixing the bbox originally
+            # it seems that x2 or y2 are at most 5 out of the width/height
+            # the following code prints the problems:
+            if node.x1 > node.x2 or node.x2 > self.frame_width:
+                print(node.x1, node.x2, self.frame_width)
+            if node.y1 > node.y2 or node.y2 > self.frame_height:
+                print(node.y1, node.y2, self.frame_height)
             ### Testing ###
-            #TODO this can work only after fixing the bbox originally, it seems that x2 or y2 are at most 5 out of the width/height
             bbox = (node.x1, node.y1, node.x2, node.y2)
             assert node.x1 < node.x2 <= self.frame_width, f"Error in original bbox (x): {node.x1, node.x2, self.frame_width}"
             assert node.y1 < node.y2 <= self.frame_height, f"Error in original bbox (y): {node.y1, node.y2, self.frame_height}"
             ### Testing ###
             '''
-            if node.x1 > node.x2 or node.x2 > self.frame_width:
-                print(node.x1, node.x2, self.frame_width)
-            if node.y1 > node.y2 or node.y2 > self.frame_height:
-                print(node.y1, node.y2, self.frame_height)
+
             
             if bigger:
                 node.x1 -= int(perc_x1 * node.x1) 
@@ -160,6 +161,11 @@ class Corruptor:
                 node.y2 -= int(perc_y2 * (node.y2-node.y1))
             
             '''
+            #TODO code to check the testing that fail:
+            if node.x1 > node.x2 or node.x2 > self.frame_width:
+                print(node.x1, node.x2, self.frame_width)
+            if node.y1 > node.y2 or node.y2 > self.frame_height:
+                print(node.y1, node.y2, self.frame_height)
             ### Testing ###
             bbox = (node.x1, node.y1, node.x2, node.y2)
             assert min(bbox) >= 0, "Error in corrupted bbox (negative)"
@@ -167,10 +173,7 @@ class Corruptor:
             assert node.y1 < node.y2 <= self.frame_height, f"Error in corrupted bbox (y): {node.y1, node.y2, self.frame_height}"
             ### Testing ###
             '''
-            if node.x1 > node.x2 or node.x2 > self.frame_width:
-                print(node.x1, node.x2, self.frame_width)
-            if node.y1 > node.y2 or node.y2 > self.frame_height:
-                print(node.y1, node.y2, self.frame_height)
+
     
             node.centroid = ((node.x1 + node.x2) // 2, (node.y1 + node.y2) // 2)
         
