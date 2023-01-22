@@ -1,3 +1,5 @@
 BDRP-env/
 .*
 !.gitignore
+graphs/
+videos/
