@@ -1,4 +1,4 @@
-import dgl
+#import dgl
 import torch
 import torch.nn as nn
 
@@ -12,6 +12,19 @@ class GraphEmbedding(nn.Module):
         
     def forward(self, g):
         return self.gnn(g)
+
+# Applies an average on seq, of shape (batch, nodes, features)
+# While taking into account the masking of msk
+class AvgReadout(nn.Module):
+    def __init__(self):
+        super(AvgReadout, self).__init__()
+
+    def forward(self, seq, msk=None):
+        if msk is None:
+            return torch.mean(seq, 1)
+        else:
+            msk = torch.unsqueeze(msk, -1)
+            return torch.sum(seq * msk, 1) / torch.sum(msk)
 
 class GCN(nn.Module):
     '''
@@ -39,12 +52,10 @@ class GCN(nn.Module):
                 m.bias.data.fill_(0.0)
 
     # Shape of seq: (batch, nodes, features)
-    def forward(self, seq, adj, sparse=False):
+    def forward(self, seq, adj):
         seq_fts = self.fc(seq)
-        if sparse:
-            out = torch.unsqueeze(torch.spmm(adj, torch.squeeze(seq_fts, 0)), 0)
-        else:
-            out = torch.bmm(adj, seq_fts)
+        
+        out = torch.bmm(adj, seq_fts)
         if self.bias is not None:
             out += self.bias
         
