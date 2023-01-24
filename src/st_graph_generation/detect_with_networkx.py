@@ -13,7 +13,7 @@ import networkx as nx
 
 from common_utils.stg_utils import save_video_params
 
-YOLO_PATH = "/Users/niccolomorabito/morabito.1808746@studenti.uniroma1.it - Google Drive/My Drive/BDMA/Semester3 CS/Big Data Research Project/Big-Data-Research-Project/src/object_detection/yolov7_with_object_tracking"    
+YOLO_PATH = "/Users/niccolomorabito/morabito.1808746@studenti.uniroma1.it - Google Drive/My Drive/BDMA/Semester3 CS/Big Data Research Project/BDRP-private/src/object_detection/yolov7_with_object_tracking"    
 MODEL_PATH = join(YOLO_PATH, "yolov7.pt")
 
 #TODO prob remove
@@ -35,7 +35,7 @@ sort_tracker = Sort(max_age=5,
                     min_hits=2,
                     iou_threshold=0.2)
 
-@dataclass(unsafe_hash=True)
+@dataclass#(unsafe_hash=True) #TODO removed the comment to define a customized __hash__
 class Node:
     id: int = field(default=0)
     x1: int = field(default=0)
@@ -46,6 +46,9 @@ class Node:
     detclass: int = field(default=0)
     class_name: str = field(default="")
     centroid: tuple = field(default=(0, 0))
+
+    def __hash__(self):
+        return hash(self.id)
 
     # TODO remove?
     def boundary_box(self) -> str:
@@ -125,8 +128,9 @@ def generate_spatial_graph(img, bbox, identities=None, categories=None, confiden
     return img, graph
 
 def videos_to_graphs(source:str = "videos/", dest:str = "graphs/", save_graphs : bool = True, weights:str = MODEL_PATH, \
-    img_size:int = 640, trace:bool = False, device:str = '', augment=None, conf_thres:float = 0.25, iou_thres:float = 0.45,\
-    classes=None, agnostic_nms=None, run_tracking:bool = True, unique_track_color:bool = False, view_img:bool = False, show_fps:bool = False, show_track:bool = False):
+    img_size:int = 640, trace:bool = False, device:str = '', augment=None, conf_thres:float = 0.25, iou_thres:float = 0.45, \
+    classes=None, agnostic_nms=None, run_tracking:bool = True, unique_track_color:bool = False, view_img:bool = False, \
+    show_fps:bool = False, show_track:bool = False):
 
     # Initialize
     set_logging()
