@@ -2,17 +2,11 @@ import pandas as pd
 import scipy.sparse as sp
 import numpy as np
 import torch
+import networkx as nx
+
 from common_utils.stg_utils import CATEGORIES
 
 pd.set_option('display.max_columns', None) 
-
-def graph_to_dict(graph):
-    return [node.__dict__ for node in graph.nodes] 
-
-def dummy_categories(class_name_column):
-    dtype = pd.CategoricalDtype(categories=CATEGORIES)
-    cat = pd.Series(class_name_column, dtype=dtype)
-    return pd.get_dummies(cat, prefix="class")
 
 def graph_to_feature_vector(graph):
     df = pd.DataFrame.from_dict(graph_to_dict(graph)).set_index("id")
@@ -28,6 +22,22 @@ def graph_to_feature_vector(graph):
     #TODO you probably need to normalize (especially the coordinates and the area)
     return torch.FloatTensor(df.values[np.newaxis]) #TODO the new axis should be for the batch (?)
 
+def graph_to_dict(graph):
+    return [node.__dict__ for node in graph.nodes] 
+
+def dummy_categories(class_name_column):
+    dtype = pd.CategoricalDtype(categories=CATEGORIES)
+    cat = pd.Series(class_name_column, dtype=dtype)
+    return pd.get_dummies(cat, prefix="class")
+
+
+
+def adj_to_normalized_tensor(adj):
+    adj = normalize_adj(adj)
+    adj = (adj + sp.eye(adj.shape[0])).todense()
+    adj = torch.FloatTensor(adj[np.newaxis]) #TODO the new axis should be for the batch (?)
+    return adj
+
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
     adj = sp.coo_matrix(adj)
@@ -36,9 +46,3 @@ def normalize_adj(adj):
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
     return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
-
-def adj_to_normalized_tensor(adj):
-    adj = normalize_adj(adj)
-    adj = (adj + sp.eye(adj.shape[0])).todense()
-    adj = torch.FloatTensor(adj[np.newaxis]) #TODO the new axis should be for the batch (?)
-    return adj
