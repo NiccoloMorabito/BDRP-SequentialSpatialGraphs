@@ -20,7 +20,7 @@ def graph_to_feature_vector(graph):
     df.drop('centroid', axis=1, inplace=True) #TODO check if it's important, but it's a tuple
     df.drop('detclass', axis=1, inplace=True) #TODO what is the meaning????
     #TODO you probably need to normalize (especially the coordinates and the area)
-    return torch.FloatTensor(df.values[np.newaxis]) #TODO the new axis should be for the batch (?)
+    return torch.FloatTensor(df.values)
 
 def graph_to_dict(graph):
     return [node.__dict__ for node in graph.nodes] 
@@ -35,7 +35,7 @@ def dummy_categories(class_name_column):
 def adj_to_normalized_tensor(adj):
     adj = normalize_adj(adj)
     adj = (adj + sp.eye(adj.shape[0])).todense()
-    adj = torch.FloatTensor(adj[np.newaxis]) #TODO the new axis should be for the batch (?)
+    adj = torch.FloatTensor(adj)
     return adj
 
 def normalize_adj(adj):

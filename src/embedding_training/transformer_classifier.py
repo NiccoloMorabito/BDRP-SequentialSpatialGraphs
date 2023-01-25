@@ -10,6 +10,7 @@ from embedding_training.embedding import GCN, AvgReadout
 #   - https://pytorch.org/tutorials/beginner/transformer_tutorial.html
 #   - https://discuss.pytorch.org/t/nn-transformerencoder-for-classification/83021
 #   - https://towardsdatascience.com/a-detailed-guide-to-pytorchs-nn-transformer-module-c80afbc9ffb1
+#   - https://n8henrie.com/2021/08/writing-a-transformer-classifier-in-pytorch/ !!!!
 
 
 class PositionalEncoding(nn.Module):
@@ -60,6 +61,7 @@ class Net(nn.Module):
         super().__init__()
 
         self.d_model = embedding_size
+        assert self.d_model % nhead == 0, "nheads must divide evenly into d_model"
         
         #TODO decide what GCN to use
         self.emb = GCN(features_size, embedding_size, activation)
@@ -84,13 +86,25 @@ class Net(nn.Module):
         self.classifier = nn.Linear(embedding_size, 1) # binary classification
         self.sigmoid =  nn.Sigmoid()
 
-    def forward(self, features, adj):
-        print(features.shape)
-        print(adj.shape)
-        x = self.emb(features, adj) # * math.sqrt(self.d_model)
-        print(x.shape)
-        x = self.readout(x)
-        print(x.shape)
+    def forward(self, seq_features_and_adjs):
+        print("forwarding")
+        # seq is a list of (features, adj)
+        #   embedding takes (features, adj)
+        #   transformer takes (seq)
+        
+        embedded_seq = list()
+        for features, adj in seq_features_and_adjs:
+            #print(features.shape)
+            #print(adj.shape)
+            x = self.emb(features, adj) # * math.sqrt(self.d_model)
+            #print(f"result of embedding's shape: {x.shape}")
+            x = self.readout(x)
+            #print(f"result of readout's shape: {x.shape}")
+            embedded_seq.append(x)
+        
+        embedded_seq = torch.stack(embedded_seq, dim=1)
+        print(f"shape of embedded sequence: {embedded_seq.shape}")
+
         print("beginning with transformer")
         x = self.pos_encoder(x)
         print(x.shape)
@@ -101,5 +115,5 @@ class Net(nn.Module):
         print(x.shape)
         x = self.sigmoid(x)
         print(x.shape)
-
+        
         return x
