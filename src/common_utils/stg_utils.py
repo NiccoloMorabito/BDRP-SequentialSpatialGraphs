@@ -46,6 +46,10 @@ def load_video_params(video_folder: str) -> dict:
     with open(params_path, 'rb') as f:
         return pickle.load(f)
 
+def load_dataset_params(path: str) -> dict:
+    with open(path, 'rb') as f:
+        return pickle.load(f)
+
 def dict_with_attributes(d: Dict[str, Any]) -> Namespace:
     """
     Convert a dictionary to a class with attributes
