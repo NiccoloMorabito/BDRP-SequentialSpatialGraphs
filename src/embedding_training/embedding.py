@@ -1,17 +1,5 @@
-#import dgl
 import torch
 import torch.nn as nn
-
-'''POSSIBLE EMBEDDING LAYERS'''
-
-class GraphEmbedding(nn.Module):
-    '''DGL (simple version)'''
-    def __init__(self, in_dim, hidden_dim):
-        super(GraphEmbedding, self).__init__()
-        self.gnn = dgl.nn.GraphConv(in_dim, hidden_dim)
-        
-    def forward(self, g):
-        return self.gnn(g)
 
 # Applies an average on seq, of shape (batch, nodes, features)
 # While taking into account the masking of msk

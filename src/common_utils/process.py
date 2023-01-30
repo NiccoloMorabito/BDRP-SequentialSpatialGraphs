@@ -2,7 +2,6 @@ import pandas as pd
 import scipy.sparse as sp
 import numpy as np
 import torch
-import networkx as nx
 
 from common_utils.stg_utils import CATEGORIES
 
@@ -10,13 +9,13 @@ pd.set_option('display.max_columns', None)
 
 def graph_to_feature_vector(graph):
     df = pd.DataFrame.from_dict(graph_to_dict(graph)).set_index("id")
-    df["area"] = (df["x2"] - df["x1"]) * (df["y2"] - df["y1"]) #TODO decide if you want to keep the area
+    df["area"] = (df["x2"] - df["x1"]) * (df["y2"] - df["y1"])
 
     class_dummies = dummy_categories(df["class_name"]) #TODO reduce the number of classes
     df = pd.concat([df,class_dummies], axis=1)
     df.drop('class_name', axis=1, inplace=True)
 
-    df.drop('conf', axis=1, inplace=True) #TODO check if it's important, but it seems to be always 0.0
+    df.drop('conf', axis=1, inplace=True) # removed because it seems to be always 0.0
     df.drop('centroid', axis=1, inplace=True) #TODO check if it's important, but it's a tuple
     df.drop('detclass', axis=1, inplace=True) #TODO what is the meaning????
     #TODO you probably need to normalize (especially the coordinates and the area)

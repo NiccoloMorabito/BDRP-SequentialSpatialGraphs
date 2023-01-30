@@ -1,93 +1,139 @@
-'''
-transformer(encoder) for classification
-'''
-import math
 import torch
-import torch.nn as nn
+from torch import nn
 from embedding_training.embedding import GCN, AvgReadout
 
-# sources (TODO delete):
-#   - https://pytorch.org/tutorials/beginner/transformer_tutorial.html
-#   - https://discuss.pytorch.org/t/nn-transformerencoder-for-classification/83021
-#   - https://towardsdatascience.com/a-detailed-guide-to-pytorchs-nn-transformer-module-c80afbc9ffb1
-#   - https://n8henrie.com/2021/08/writing-a-transformer-classifier-in-pytorch/ !!!!
+
+#TODO source https://github.com/jensjepsen/imdb-transformer/blob/master/model.py
 
 
-class PositionalEncoding(nn.Module):
+def get_pos_onehot(length):
+    onehot = torch.zeros(length,length)
+    idxs = torch.arange(length).long().view(-1,1)
+    onehot.scatter_(1,idxs,1)
+    return onehot
+
+class MultiHeadAttention(nn.Module):
     """
-    This class is taken from the PyTorch tutorial
-    https://pytorch.org/tutorials/beginner/transformer_tutorial.html
+        A multihead attention module,
+        using scaled dot-product attention.
     """
+    def __init__(self,input_size,hidden_size,num_heads):
+        super(MultiHeadAttention,self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_heads = num_heads
 
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000): #TODO check parameters
-        #probably max_len is the maximum length of the sequence -> number of frames in the longest video
-        super().__init__()
-        self.dropout = nn.Dropout(p=dropout)
+        self.head_size = self.hidden_size // num_heads
 
-        position = torch.arange(max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-        pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term)
-        pe[:, 0, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe)
+        self.q_linear = nn.Linear(self.input_size,self.hidden_size)
+        self.k_linear = nn.Linear(self.input_size,self.hidden_size)
+        self.v_linear = nn.Linear(self.input_size,self.hidden_size)
 
-    def forward(self, x):
-        """
-        Args:
-            x: Tensor, shape [seq_len, batch_size, embedding_dim]
-        """
-        x = x + self.pe[:x.size(0)]
-        return self.dropout(x)
+        self.joint_linear = nn.Linear(self.hidden_size,self.hidden_size)
 
-#TODO following code taken from https://n8henrie.com/2021/08/writing-a-transformer-classifier-in-pytorch/
+        self.softmax = nn.Softmax(dim=-1)
 
-class Net(nn.Module):
-    """
-    Text classifier based on a pytorch TransformerEncoder.
-    """
+    def forward(self,q,k,v):
+        # project the queries, keys and values by their respective weight matrices
+        q_proj = self.q_linear(q).view(q.size(0), q.size(1), self.num_heads,self.head_size).transpose(1,2)
+        k_proj = self.k_linear(k).view(k.size(0), k.size(1), self.num_heads,self.head_size).transpose(1,2)
+        v_proj = self.v_linear(v).view(v.size(0), v.size(1), self.num_heads,self.head_size).transpose(1,2)
 
-    def __init__(
-        self,
-        features_size,
-        embedding_size, #d_model
-        nhead=8,
-        dim_feedforward=2048,
-        num_layers=6,
-        dropout=0.1,
-        activation="prelu", #TODO???
-        classifier_dropout=0.1, #TODO????
-    ):
 
-        super().__init__()
-
-        self.d_model = embedding_size
-        assert self.d_model % nhead == 0, "nheads must divide evenly into d_model"
+        # calculate attention weights
+        unscaled_weights = torch.matmul(q_proj,k_proj.transpose(2,3))
+        weights = self.softmax(unscaled_weights / torch.sqrt(torch.Tensor([self.head_size * 1.0]).to(unscaled_weights)))
         
-        #TODO decide what GCN to use
-        self.emb = GCN(features_size, embedding_size, activation)
+        # weight values by their corresponding attention weights
+        weighted_v = torch.matmul(weights,v_proj)
+        weighted_v = weighted_v.transpose(1,2).contiguous()
+        
+        # do a linear projection of the weighted sums of values
+        joint_proj = self.joint_linear(weighted_v.view(q.size(0),q.size(1),self.hidden_size))
+
+        # store a reference to attention weights, for THIS forward pass,
+        # for visualisation purposes
+        self.weights = weights
+
+        return joint_proj
+
+
+class Block(nn.Module):
+    """
+        One block of the transformer.
+        Contains a multihead attention sublayer
+        followed by a feed forward network.
+    """
+    def __init__(self,input_size,hidden_size,num_heads,activation=nn.ReLU,dropout=None):
+        super(Block,self).__init__()
+        self.dropout = dropout
+        
+        self.attention = MultiHeadAttention(input_size,input_size,num_heads) #TODO in the middle there was hidden_size
+        self.attention_norm = nn.LayerNorm(input_size)
+
+        ff_layers = [
+            nn.Linear(input_size,hidden_size),
+            activation(),
+            nn.Linear(hidden_size,input_size),
+            ]
+
+        self.attention_dropout = nn.Dropout(0.1) #TODO
+        ff_layers.append(nn.Dropout(0.1)) #TODO
+
+        self.ff = nn.Sequential(
+            *ff_layers
+            )
+        self.ff_norm = nn.LayerNorm(input_size)
+
+    def forward(self,x):
+        attended = self.attention_norm(self.attention_dropout(self.attention(x,x,x)) + x)
+        return self.ff_norm(self.ff(attended) + x)
+
+
+
+class Transformer(nn.Module):
+    def __init__(self,input_size,hidden_size,ff_size,num_blocks,num_heads,activation=nn.ReLU,dropout=None):
+        """
+            A single Transformer Network
+        """
+        super(Transformer,self).__init__()
+
+        self.blocks = nn.Sequential(
+                *[Block(input_size,hidden_size,num_heads,activation,dropout=dropout) 
+                    for _ in range(num_blocks)]
+            )
+
+    def forward(self,x):
+        """
+            Sequentially applies the blocks of the Transformer network
+        """
+        return self.blocks(x)
+
+class MyNet(nn.Module):
+    def __init__(self, features_size, embedding_size, max_length = 1001, model_size=128, num_heads=4,num_blocks=1,dropout=0.1):
+        super(MyNet, self).__init__()
+        self.model_size = model_size #TODO
+        self.model_size = embedding_size #TODO change just to make the step after pos work
+        self.max_length = max_length
+
+        self.emb = GCN(features_size, embedding_size, "prelu")
 
         self.readout = AvgReadout()
 
-        self.pos_encoder = PositionalEncoding(
-            d_model=embedding_size,
-            dropout=dropout,
-        )
+        self.pos = nn.Linear(max_length, self.model_size)
 
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=embedding_size,
-            nhead=nhead,
-            dim_feedforward=dim_feedforward,
-            dropout=dropout,
+        self.transformer = Transformer(
+            self.model_size,
+            self.model_size,
+            self.model_size,
+            num_blocks,
+            num_heads,
+            dropout=dropout
         )
-        self.transformer_encoder = nn.TransformerEncoder(
-            encoder_layer,
-            num_layers=num_layers,
-        )
-        self.classifier = nn.Linear(embedding_size, 1) # binary classification
+        self.classifier = nn.Linear(self.model_size, 1) # binary classification
         self.sigmoid =  nn.Sigmoid()
-
+    
     def forward(self, seq_features_and_adjs):
-        print("forwarding")
         # seq is a list of (features, adj)
         #   embedding takes (features, adj)
         #   transformer takes (seq)
@@ -101,19 +147,26 @@ class Net(nn.Module):
             x = self.readout(x)
             #print(f"result of readout's shape: {x.shape}")
             embedded_seq.append(x)
+        #print(f"embedding element shape: {x.shape}")
         
         embedded_seq = torch.stack(embedded_seq, dim=1)
-        print(f"shape of embedded sequence: {embedded_seq.shape}")
+        #print(f"shape of embedded sequence: {embedded_seq.shape}")
 
-        print("beginning with transformer")
-        x = self.pos_encoder(x)
-        print(x.shape)
-        x = self.transformer_encoder(x)
-        print(x.shape)
-        # x = x.mean(dim=1) ????
+        #print("beginning with transformer")
+        pos = self.pos(get_pos_onehot(self.max_length).to(embedded_seq)).unsqueeze(0)
+        #print(pos.shape)
+        #print(embedded_seq.size())
+        #print((embedded_seq.size() + (self.model_size,)))
+        x = embedded_seq.view(*(embedded_seq.size()[:-1] + (self.model_size,)))
+        #print(x.shape)
+        x += pos
+        #print(x.shape)
+        x = self.transformer(x)
+        #print(x.shape)
+        x = x.mean(dim=1)
+        #print(x.shape)
         x = self.classifier(x)
-        print(x.shape)
+        #print(x.shape)
         x = self.sigmoid(x)
-        print(x.shape)
-        
+        #print(x.shape)
         return x

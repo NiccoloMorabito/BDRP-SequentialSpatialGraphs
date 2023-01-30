@@ -1,5 +1,5 @@
 BDRP-env/
 .*
+.DS_Store
 !.gitignore
-graphs/
-videos/
+data/

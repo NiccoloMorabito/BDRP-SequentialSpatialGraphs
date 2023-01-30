@@ -2,9 +2,10 @@ from os.path import join, exists
 from typing import Union
 from pathlib import Path
 import cv2
-from typing import List, Tuple, Dict, Any, Union
+from typing import Dict, Any, Union
 from argparse import Namespace
 import pickle
+from dataclasses import dataclass, field
 
 CATEGORIES = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',\
     'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant',\
@@ -15,12 +16,32 @@ CATEGORIES = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'trai
     'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator',\
     'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
 
-#TODO check the value of these contants (change also names of the variables)
-STG_SPATIAL_DIST_LABEL = "weight"
-SG_SPATIAL_DIST_LABEL = "distance"
-SG_SPATIAL_SPEED_LABEL = "speed"
+EDGE_LABEL = "weight"
 
 PARAMS_FILENAME = "params.pickle"
+
+@dataclass#(unsafe_hash=True) #TODO removed the comment to define a customized __hash__
+class Node:
+    id: int = field(default=0)
+    x1: int = field(default=0)
+    y1: int = field(default=0)
+    x2: int = field(default=0)
+    y2: int = field(default=0)
+    conf: float = field(default=float(0))
+    detclass: int = field(default=0)
+    class_name: str = field(default="")
+    centroid: tuple = field(default=(0, 0))
+
+    def __hash__(self):
+        return hash(self.id)
+
+    # TODO remove?
+    def boundary_box(self) -> str:
+        return f"tl: ({self.x1}, {self.y1}) - br: ({self.x2}, {self.y2})"
+
+@dataclass(unsafe_hash=True)
+class Edge:
+    weight: Union[float, int] = field(default=0)
 
 def get_video_params(video_path: Union[Path, str]) -> dict:
     if not exists(video_path): raise FileNotFoundError("Video file not found")
@@ -46,6 +67,7 @@ def load_video_params(video_folder: str) -> dict:
     with open(params_path, 'rb') as f:
         return pickle.load(f)
 
+#TODO delete this function
 def load_dataset_params(path: str) -> dict:
     with open(path, 'rb') as f:
         return pickle.load(f)
