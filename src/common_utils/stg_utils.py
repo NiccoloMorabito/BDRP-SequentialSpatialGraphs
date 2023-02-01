@@ -20,7 +20,7 @@ EDGE_LABEL = "weight"
 
 PARAMS_FILENAME = "params.pickle"
 
-@dataclass#(unsafe_hash=True) #TODO removed the comment to define a customized __hash__
+@dataclass#(unsafe_hash=True) #TODO removed the unsafe_hash to define a customized __hash__
 class Node:
     id: int = field(default=0)
     x1: int = field(default=0)
@@ -55,20 +55,19 @@ def get_video_params(video_path: Union[Path, str]) -> dict:
     cap.release()
     return params
 
-def save_video_params(source: str, dest: str, videoname: str):
+def save_video_params(source: str, dest: str, videoname: str): #TODO delete
     video_path = join(source, videoname)
     video_params = get_video_params(video_path)
     params_path = join(dest, videoname, PARAMS_FILENAME)
     with open(params_path, 'wb') as f:
         pickle.dump(video_params, f)
 
-def load_video_params(video_folder: str) -> dict:
+def load_video_params(video_folder: str) -> dict: #TODO delete
     params_path = join(video_folder, PARAMS_FILENAME)
-    with open(params_path, 'rb') as f:
-        return pickle.load(f)
+    return load_pickle(params_path)
 
-#TODO delete this function
-def load_dataset_params(path: str) -> dict:
+#TODO this function should not be in "stg_utils" -> change name of file?
+def load_pickle(path: str) -> dict:
     with open(path, 'rb') as f:
         return pickle.load(f)
 
