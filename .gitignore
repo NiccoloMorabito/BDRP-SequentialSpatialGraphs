@@ -2,4 +2,5 @@ BDRP-env/
 .*
 .DS_Store
 !.gitignore
-data/
+*.pt
+Adoc_*
