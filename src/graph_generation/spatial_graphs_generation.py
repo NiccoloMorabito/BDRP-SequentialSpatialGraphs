@@ -105,7 +105,7 @@ if __name__=='__main__':
 
     videos_folder = os.path.join(VIDEOS_FOLDER, dataset_name)
     params_pickle_path = os.path.join(VIDEOPARAMS_FOLDER, f"{dataset_name}_video_params.pickle")
-    #generate_videoparams(videos_folder, params_pickle_path)
+    generate_videoparams(videos_folder, params_pickle_path)
 
     ''' FOR TESTING SET '''
     txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTesting.txt")
