@@ -1,10 +1,13 @@
-# importing pandas
 import pandas as pd
 import networkx as nx
 from scipy.spatial import distance
 import pickle
+import os
 
-from common_utils.stg_utils import Node
+import sys
+sys.path.append("..")
+
+from common_utils.stg_utils import Node, get_video_params
 
 CLASSES_LIST =  ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',
         'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
@@ -14,6 +17,13 @@ CLASSES_LIST =  ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 't
         'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
         'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone',
         'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear']
+
+VIDEOS_FOLDER           = "" #TODO add path to the videos folder
+TXT_FOLDER              = "../../data/yolo_annotated_datasets/"
+TRAINING_GRAPH_FOLDER   = "../../data/training_graphs/"
+TESTING_GRAPH_FOLDER    = "../../data/testing_graphs/"
+VIDEOPARAMS_FOLDER      = "../../data/video_parameters/"
+TESTING_LABELS_FOLDER   = "../../data/testing_labels/"
 
 def generate_spatial_graph_from_txt(txt_path, pickle_path):
     # read text file into pandas DataFrame
@@ -54,18 +64,21 @@ def generate_spatial_graph_from_txt(txt_path, pickle_path):
                     if node1.id == node2.id: continue
                     graph.add_edge(node1, node2, weight=distance.euclidean(node1.centroid, node2.centroid))
             dictAvenue[list_nameMapping[i-df['video_no'].min()][0]].append(graph)
-            # dictAvenue['video_'+str(i)].append(graph)
 
     #  save graph dict
     with open(pickle_path, 'wb') as handle:
         pickle.dump(dictAvenue, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    '''
-    #  load graph dict
-    with open(pickle_path, 'rb') as handle:
-        dictAvenue = pickle.load(handle)
-        print(dictAvenue)
-    '''
+def generate_videoparams(dataset_folder, params_pickle_path):
+    videoname2params = dict()
+
+    for video in os.listdir(dataset_folder):
+        video_path = os.path.join(dataset_folder, video)
+        params = get_video_params(video_path)
+        videoname2params[video_path] = params
+
+    with open(params_pickle_path, 'wb') as f:
+        pickle.dump(videoname2params, f)
 
 def generate_labels_from_txt(txt_path, pickle_path):
     # read text file into pandas DataFrame
@@ -79,13 +92,26 @@ def generate_labels_from_txt(txt_path, pickle_path):
     with open(pickle_path, 'wb') as handle:
         pickle.dump(dic_label, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-if __name__=='__main__':
-    '''
-    txt_path = "datasets/AvenueDatasetResultsTesting.txt"
-    pickle_path = "results/AvenueDatasetResultsTesting.pickle"
-    generate_spatial_graph_from_txt(txt_path, pickle_path)
-    '''
 
-    labels_txt_path = "datasets/AvenueDatasetResultsTesting_Label.txt"
-    labels_pickle_path = "results/AvenueDatasetResultsTestingLabels.pickle"
-    generate_labels_from_txt()
+
+if __name__=='__main__':
+
+    dataset_name = "AvenueDataset" #TODO change according to the dataset
+
+    ''' FOR TRAINING SET '''
+    txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTraining.txt")
+    graphs_pickle_path = os.path.join(TRAINING_GRAPH_FOLDER, f"{dataset_name}_trainingTODO.pickle")
+    generate_spatial_graph_from_txt(txt_path, graphs_pickle_path)
+
+    videos_folder = os.path.join(VIDEOS_FOLDER, dataset_name)
+    params_pickle_path = os.path.join(VIDEOPARAMS_FOLDER, f"{dataset_name}_video_params.pickle")
+    #generate_videoparams(videos_folder, params_pickle_path)
+
+    ''' FOR TESTING SET '''
+    txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTesting.txt")
+    graphs_pickle_path = os.path.join(TESTING_GRAPH_FOLDER, f"{dataset_name}_testingTODO.pickle")
+    generate_spatial_graph_from_txt(txt_path, graphs_pickle_path)
+
+    labels_txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTesting_Label.txt")
+    labels_pickle_path = os.path.join(TESTING_LABELS_FOLDER, f"{dataset_name}_testing_labelsTODO.pickle")
+    generate_labels_from_txt(labels_txt_path, labels_pickle_path)
