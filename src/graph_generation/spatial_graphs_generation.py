@@ -51,9 +51,8 @@ def generate_spatial_graph_from_txt(txt_path, pickle_path):
 
     # feed data into the graph
     dictAvenue={} # create a dict to save all videos, each video (dict key) is a list (dict value) of frames, each frame is a nx graph
-    for i in range(df['video_no'].min(),df['video_no'].max()+1 ):
-        if i==list_nameMapping[i-df['video_no'].min()][1]:
-            dictAvenue[list_nameMapping[i-df['video_no'].min()][0]]=[]
+    for i in df.video_no.unique():
+        dictAvenue[str(df[df['video_no']==i]['path_org'].values[0])]=[]
         for j in range(df[df['video_no']==i]['frame_no'].min(),df[df['video_no']==i]['frame_no'].max()):
             graph = nx.Graph()
             df_new=df[(df['video_no']==i) & (df['frame_no']==j)]
@@ -63,7 +62,7 @@ def generate_spatial_graph_from_txt(txt_path, pickle_path):
                 for node2 in graph.nodes:
                     if node1.id == node2.id: continue
                     graph.add_edge(node1, node2, weight=distance.euclidean(node1.centroid, node2.centroid))
-            dictAvenue[list_nameMapping[i-df['video_no'].min()][0]].append(graph)
+            dictAvenue[str(df[df['video_no']==i]['path_org'].values[0])].append(graph)
 
     #  save graph dict
     with open(pickle_path, 'wb') as handle:
