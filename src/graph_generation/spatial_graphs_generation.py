@@ -99,7 +99,7 @@ if __name__=='__main__':
 
     ''' FOR TRAINING SET '''
     txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTraining.txt")
-    graphs_pickle_path = os.path.join(TRAINING_GRAPH_FOLDER, f"{dataset_name}_trainingTODO.pickle")
+    graphs_pickle_path = os.path.join(TRAINING_GRAPH_FOLDER, f"{dataset_name}_training.pickle")
     generate_spatial_graph_from_txt(txt_path, graphs_pickle_path)
 
     videos_folder = os.path.join(VIDEOS_FOLDER, dataset_name)
@@ -108,9 +108,9 @@ if __name__=='__main__':
 
     ''' FOR TESTING SET '''
     txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTesting.txt")
-    graphs_pickle_path = os.path.join(TESTING_GRAPH_FOLDER, f"{dataset_name}_testingTODO.pickle")
+    graphs_pickle_path = os.path.join(TESTING_GRAPH_FOLDER, f"{dataset_name}_testing.pickle")
     generate_spatial_graph_from_txt(txt_path, graphs_pickle_path)
 
     labels_txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTesting_Label.txt")
-    labels_pickle_path = os.path.join(TESTING_LABELS_FOLDER, f"{dataset_name}_testing_labelsTODO.pickle")
+    labels_pickle_path = os.path.join(TESTING_LABELS_FOLDER, f"{dataset_name}_testing_labels.pickle")
     generate_labels_from_txt(labels_txt_path, labels_pickle_path)

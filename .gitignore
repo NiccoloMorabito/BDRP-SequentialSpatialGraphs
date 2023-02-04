@@ -4,3 +4,4 @@ BDRP-env/
 !.gitignore
 *.pt
 Adoc_*
+__pycache__/
