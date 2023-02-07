@@ -80,9 +80,7 @@ class Block(nn.Module):
         self.attention_dropout = nn.Dropout(0.1) #TODO
         ff_layers.append(nn.Dropout(0.1)) #TODO
 
-        self.ff = nn.Sequential(
-            *ff_layers
-            )
+        self.ff = nn.Sequential(*ff_layers)
         self.ff_norm = nn.LayerNorm(input_size)
 
     def forward(self,x):
