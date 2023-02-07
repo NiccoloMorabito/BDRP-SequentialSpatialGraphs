@@ -3,5 +3,5 @@ BDRP-env/
 .DS_Store
 !.gitignore
 *.pt
-Adoc_*
+Adoc_training_*
 __pycache__/

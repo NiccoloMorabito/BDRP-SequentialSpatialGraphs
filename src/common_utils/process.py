@@ -7,19 +7,24 @@ from common_utils.stg_utils import CATEGORIES
 
 pd.set_option('display.max_columns', None) 
 
-def graph_to_feature_vector(graph):
+def graph_to_feature_vector(graph, normalize: bool = False): # normalization seems to affect negatively the performance
     df = pd.DataFrame.from_dict(graph_to_dict(graph)).set_index("id")
     df["area"] = (df["x2"] - df["x1"]) * (df["y2"] - df["y1"])
 
+    # one-hot encoding of categorical feature
     class_dummies = dummy_categories(df["class_name"]) #TODO reduce the number of classes
     df = pd.concat([df,class_dummies], axis=1)
     df.drop('class_name', axis=1, inplace=True)
 
+    # removing useless features
     df.drop('conf', axis=1, inplace=True) # removed because it seems to be always 0.0
-    df.drop('centroid', axis=1, inplace=True) #TODO check if it's important, but it's a tuple
-    df.drop('detclass', axis=1, inplace=True) #TODO what is the meaning????
-    #TODO you probably need to normalize (especially the coordinates and the area)
-    return torch.FloatTensor(df.values)
+    df.drop('centroid', axis=1, inplace=True)
+    df.drop('detclass', axis=1, inplace=True)
+    
+    feature_vector =  torch.FloatTensor(df.values)
+    if normalize:
+        return torch.nn.functional.normalize(feature_vector)
+    return feature_vector
 
 def graph_to_dict(graph):
     return [node.__dict__ for node in graph.nodes] 
