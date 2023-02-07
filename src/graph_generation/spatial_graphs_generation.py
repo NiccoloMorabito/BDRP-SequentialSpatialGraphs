@@ -28,7 +28,7 @@ TESTING_LABELS_FOLDER   = "../../data/testing_labels/"
 def generate_spatial_graph_from_txt(txt_path, pickle_path):
     # read text file into pandas DataFrame
     df = pd.read_csv(txt_path, sep=",",header=0)
-
+    
     # preprocessing the df
     indexlist=[*range(0, 78, 1)]
     mapdict = {indexlist[i]: CLASSES_LIST[i] for i in range(len(indexlist))}
