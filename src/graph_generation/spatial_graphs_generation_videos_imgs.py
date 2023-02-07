@@ -28,10 +28,11 @@ TESTING_LABELS_FOLDER   = "../../data/testing_labels/"
 def generate_spatial_graph_from_txt(txt_path, pickle_path):
     # read text file into pandas DataFrame
     df = pd.read_csv(txt_path, sep=",",header=0)
+    # preprocessing the df
+    indexlist=[*range(0, 78, 1)]
+    mapdict = {indexlist[i]: CLASSES_LIST[i] for i in range(len(indexlist))}
+
     if df['frame_amount'].max()>0:
-        # preprocessing the df
-        indexlist=[*range(0, 78, 1)]
-        mapdict = {indexlist[i]: CLASSES_LIST[i] for i in range(len(indexlist))}
 
         df['path_org'] = df['path']
         df['path'] = df['path'].str.extract(r'(\d+)(?!.*\d)')
@@ -106,7 +107,7 @@ def generate_labels_from_txt(txt_path, pickle_path):
 
 if __name__=='__main__':
 
-    dataset_name = "AvenueDataset" #TODO change according to the dataset
+    dataset_name = "StreetSceneDataset" #TODO change according to the dataset
 
     ''' FOR TRAINING SET '''
     txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTraining.txt")
