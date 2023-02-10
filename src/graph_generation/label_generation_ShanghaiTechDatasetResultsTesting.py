@@ -10,17 +10,31 @@ import networkx as nx
 from scipy.spatial import distance
 import pickle
 
-root="data/yolo_annotated_datasets/StreetSceneDatasetResultsTesting_Label.txt"
-df=pd.read_csv(root, sep=",",header=0)
-df_label_list=df.groupby('path')['abnormal'].apply(list)
-dic_label={}
-for i in range(len(df_label_list.keys())):
-    dic_label[df_label_list.keys()[i]]=list(df_label_list[i])
 
-with open('data/testing_labels/StreetScene_testing_labels.pickle', 'wb') as handle:
+list_key=[]
+list_value=[]
+
+for file in glob.glob(r"/Users/xiaokeai/Documents/GitHub/yolov7-main/datasets/shanghaitech/testing/test_frame_mask/*.npy"):
+    try:
+        a=numpy.load(file,allow_pickle=True)
+        # print(len(a))
+        # print(str(file))
+        list_key.append(str(file))
+        list_value.append(a)
+    except:
+        pass 
+
+list_key_replace = [s.replace('/Users/xiaokeai/Documents/GitHub/yolov7-main/datasets/shanghaitech/testing/test_frame_mask/', '/Users/xiaokeai/Documents/GitHub/yolov7-main/datasets/shanghaitech/testing/frames/') for s in list_key]
+list_key_replace = [s.replace('.npy', '') for s in list_key_replace]
+
+dic_label={}
+for i in range(len(list_key_replace)):
+    dic_label[list_key_replace[i]]=list(list_value[i])
+
+with open('results/ShanghaiTech_testing_labels.pickle', 'wb') as handle:
     pickle.dump(dic_label, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-with open('data/testing_labels/StreetScene_testing_labels.pickle', 'rb') as handle:
+with open('results/ShanghaiTech_testing_labels.pickle', 'rb') as handle:
      dictAvenue = pickle.load(handle)
-     print(dictAvenue)
+     print(dictAvenue.keys())
 
