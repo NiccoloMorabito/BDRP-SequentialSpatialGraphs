@@ -3,9 +3,6 @@ Big Data Research Project - CentraleSupélec 2022/23
 
 Authors: Niccolò Morabito and Yi Wu
 
-## Code
-TODO
-
 ## Data
 3 video anomaly detection benchmarks have been used:
 * [Avenue](http://www.cse.cuhk.edu.hk/leojia/projects/detectabnormal/dataset.html)
@@ -20,3 +17,12 @@ For each of them, we built:
 * testset labels pickle files in `data/testing_labels`.
 
 For the complete `data/` folder, please check the following [GoogleDrive link](https://drive.google.com/drive/folders/12bJFgATCoQJkGjBAQFh8F1aDIxgK-X69?usp=share_link).
+
+## Code
+The project is vided into the following folders:
+* `src/grah_generation/` for the generation of NetworkX graphs starting from Yolo-annotated datasets files;
+* `src/anomaly_generation/` for the corruption of graphs;
+* `src/embedding_training/` for GCN and transformers;
+* `src/common_utils/` for other useful code.
+
+In order to train the model, it is sufficient to run the code contained in theh [`src/pipeline.ipynb`](src/pipeline.ipynb) Jupyter notebook.
