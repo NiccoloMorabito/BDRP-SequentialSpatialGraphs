@@ -50,8 +50,8 @@ def generate_spatial_graph_from_txt(txt_path, pickle_path):
         list_nameMapping=list(zip(df['path_org'], df['video_no']))
         list_nameMapping=list(dict.fromkeys(list_nameMapping))
     else:
-        df['path']=df['path'].str.extract(r'^(.*[\\\/])')
-        df['path']=df['path'].str[:-1]
+        #df['path']=df['path'].str.extract(r'^(.*[\\\/])')
+        #df['path']=df['path'].str[:-1]
         df['path_org'] = df['path']
         df['x1'].astype(float)
         df['x2'].astype(float)
@@ -109,14 +109,14 @@ if __name__=='__main__':
 
     dataset_name = "StreetSceneDataset" #TODO change according to the dataset
 
-    ''' FOR TRAINING SET '''
+    ''' FOR TRAINING SET'''
     txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTraining.txt")
     graphs_pickle_path = os.path.join(TRAINING_GRAPH_FOLDER, f"{dataset_name}_training.pickle")
-    generate_spatial_graph_from_txt(txt_path, graphs_pickle_path)
+    #generate_spatial_graph_from_txt(txt_path, graphs_pickle_path)
 
     videos_folder = os.path.join(VIDEOS_FOLDER, dataset_name)
     params_pickle_path = os.path.join(VIDEOPARAMS_FOLDER, f"{dataset_name}_video_params.pickle")
-    generate_videoparams(videos_folder, params_pickle_path)
+    #generate_videoparams(videos_folder, params_pickle_path)
 
     ''' FOR TESTING SET '''
     txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTesting.txt")
@@ -125,4 +125,4 @@ if __name__=='__main__':
 
     labels_txt_path = os.path.join(TXT_FOLDER, f"{dataset_name}ResultsTesting_Label.txt")
     labels_pickle_path = os.path.join(TESTING_LABELS_FOLDER, f"{dataset_name}_testing_labels.pickle")
-    generate_labels_from_txt(labels_txt_path, labels_pickle_path)
+    #generate_labels_from_txt(labels_txt_path, labels_pickle_path)

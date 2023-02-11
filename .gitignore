@@ -5,3 +5,8 @@ BDRP-env/
 *.pt
 Adoc_training_*
 __pycache__/
+data/torch_datasets/*
+data/training_graphs/ShanghaiTech_training.pickle
+data/yolo_annotated_datasets/ShanghaiTechDatasetResultsTraining.txt
+data/yolo_annotated_datasets/StreetSceneDatasetResultsTesting.txt
+data/testing_graphs/StreetSceneDataset_testing.pickle
