@@ -3,8 +3,7 @@ from torch import nn
 from embedding_training.embedding import GCN, AvgReadout
 
 
-#TODO source https://github.com/jensjepsen/imdb-transformer/blob/master/model.py
-
+# source https://github.com/jensjepsen/imdb-transformer/blob/master/model.py
 
 def get_pos_onehot(length):
     onehot = torch.zeros(length,length)
@@ -138,33 +137,17 @@ class MyNet(nn.Module):
         
         embedded_seq = list()
         for features, adj in seq_features_and_adjs:
-            #print(features.shape)
-            #print(adj.shape)
             x = self.emb(features, adj) # * math.sqrt(self.d_model)
-            #print(f"result of embedding's shape: {x.shape}")
             x = self.readout(x)
-            #print(f"result of readout's shape: {x.shape}")
             embedded_seq.append(x)
-        #print(f"embedding element shape: {x.shape}")
         
         embedded_seq = torch.stack(embedded_seq, dim=1)
-        #print(f"shape of embedded sequence: {embedded_seq.shape}")
 
-        #print("beginning with transformer")
         pos = self.pos(get_pos_onehot(self.max_length).to(embedded_seq)).unsqueeze(0)
-        #print(pos.shape)
-        #print(embedded_seq.size())
-        #print((embedded_seq.size() + (self.model_size,)))
         x = embedded_seq.view(*(embedded_seq.size()[:-1] + (self.model_size,)))
-        #print(x.shape)
         x += pos
-        #print(x.shape)
         x = self.transformer(x)
-        #print(x.shape)
         x = x.mean(dim=1)
-        #print(x.shape)
         x = self.classifier(x)
-        #print(x.shape)
         x = self.sigmoid(x)
-        #print(x.shape)
         return x
