@@ -37,7 +37,7 @@ class Node:
 
     # TODO remove?
     def boundary_box(self) -> str:
-        return f"tl: ({self.x1}, {self.y1}) - br: ({self.x2}, {self.y2})"
+        return f"({self.x1}, {self.y1}) - ({self.x2}, {self.y2})"
 
 @dataclass(unsafe_hash=True)
 class Edge:

@@ -109,8 +109,8 @@ class Transformer(nn.Module):
 class MyNet(nn.Module):
     def __init__(self, features_size, embedding_size, max_length = 1001, model_size=128, num_heads=4,num_blocks=1,dropout=0.1):
         super(MyNet, self).__init__()
-        self.model_size = model_size #TODO
-        self.model_size = embedding_size #TODO change just to make the step after pos work
+        self.model_size = model_size
+        self.model_size = embedding_size
         self.max_length = max_length
 
         self.emb = GCN(features_size, embedding_size, "prelu")
