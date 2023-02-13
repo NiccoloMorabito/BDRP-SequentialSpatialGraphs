@@ -3,14 +3,17 @@ import random
 from copy import deepcopy
 from common_utils.stg_utils import *
 
+num_categories = len(CATEGORIES)
+CATEGORIES_DISTRIBUTION = [0.2, 0.2, 0.2, 0.2] + [(0.2/(num_categories-4))]*(num_categories-4)
+
 class Corruptor:
-    def __init__(self, frame_height: int, frame_width: int, corruption_categs: bool = True, \
-        corruption_bboxes : bool = True, corruption_weights: bool = True, permutation_weights : bool = False):
+    def __init__(self, frame_height: int, frame_width: int):
+        #, corruption_categs: bool = True,  corruption_bboxes : bool = True, corruption_weights: bool = True, permutation_weights : bool = False):
         self.frame_height = frame_height
         self.frame_width = frame_width
-        #TODO these booleans (and their parameters?) could also be generated randomly (but use the same for the same Corruptor)
+        # deciding randomly what to corrupt for the current video
         self.corruption_categs, self.corruption_bboxes, self.corruption_weights, self.permutation_weights = \
-            corruption_categs, corruption_bboxes, corruption_weights, permutation_weights
+            bool(random.getrandbits(1)), bool(random.getrandbits(1)), bool(random.getrandbits(1)), False
 
         # memory fields (when a node is not in the graph anymore, it must be removed from here (its id could be reassigned by yolo))
         self.nodeid_to_category = dict()
@@ -41,19 +44,18 @@ class Corruptor:
 
         return copy
     
-    def __corrupt_categories(self, graph: nx.Graph, corruption_prob: float = 0.4):
+    def __corrupt_categories(self, graph: nx.Graph, corruption_prob: float = 0.5):
         '''
         Corrupt categories (i.e. for each frame/graph, if the object is new decide
             - whether to corrupt its category from that moment on
             - or never do
         '''
-        #TODO (optionally) if the object is not new, you can also revaluate with a smaller
-        # probability whether to corrupt its category from that moment on
         for node in graph.nodes:
             # if the object is new randomly choose whether to corrupt the category or not
             if node.id not in self.nodeid_to_category.keys():
                 if random.random() < corruption_prob:
-                    self.nodeid_to_category[node.id] = random.choice(CATEGORIES)
+                    self.nodeid_to_category[node.id] = \
+                        random.choices(CATEGORIES, weights=CATEGORIES_DISTRIBUTION, k=1)[0]
                 else:
                     self.nodeid_to_category[node.id] = node.class_name
             node.class_name = self.nodeid_to_category[node.id]
@@ -62,18 +64,18 @@ class Corruptor:
         present_ids = [n.id for n in graph.nodes]
         self.nodeid_to_category = {k: v for k, v in self.nodeid_to_category.items() if k in present_ids}
     
-    def __corrupt_weights(self, graph: nx.Graph, k: int = None):
+    def __corrupt_weights(self, graph: nx.Graph, percentage_of_edges: float = 0.25):
         '''
         Corrupt weights of the graph (i.e. for every frame, reduce the distance between objects wrt to the previous frame)
         '''
         # choose the set of edges to corrupt the weights of
         edges_to_corrupt = list(graph.edges(data=True))
-        if k is not None:
-            edges_to_corrupt = random.sample(edges_to_corrupt, k=k)
+        if percentage_of_edges is not None:
+            edges_to_corrupt = random.sample(edges_to_corrupt, k=int(len(edges_to_corrupt)*percentage_of_edges))
 
         # TODO clean this code
         for n1, n2, d in edges_to_corrupt:
-            reducing_percentage = random.random() #TODO this could become a paramter to control the reduction
+            reducing_percentage = random.uniform(0, 0.25) #TODO this could become a parameter to control the reduction
             # reduce the weight of the edge since it represents the distance
             d[EDGE_LABEL] -= reducing_percentage * d[EDGE_LABEL]
 
@@ -166,6 +168,7 @@ class Corruptor:
     def __generate_random_bbox_params(self):
         #TODO this generation could be changed to make the results more "controlled" (for instance, reducing the interval of percentages to [0,0.5])
         bigger = bool(random.getrandbits(1))
-        perc_x1, perc_y1, perc_x2, perc_y2 = random.random(), random.random(), random.random(), random.random()
+        perc_x1, perc_y1, perc_x2, perc_y2 = \
+            random.uniform(0, 0.25), random.uniform(0, 0.25), random.uniform(0, 0.25), random.uniform(0, 0.25)
         return bigger, perc_x1, perc_x1, perc_y1, perc_x2, perc_y2            
 
