@@ -26,3 +26,5 @@ The project is vided into the following folders:
 * `src/common_utils/` for other useful code.
 
 In order to train the model, it is sufficient to run the code contained in theh [`src/pipeline.ipynb`](src/pipeline.ipynb) Jupyter notebook.
+
+A demo is also available in the [`src/demo.ipynb`](src/demo.ipynb) file to show the process from the YOLO-annoted dataset to a prediction.
